@@ -26,11 +26,28 @@ func text(sb *strings.Builder, v *reflect.Value) {
 		sb.WriteString(structName)
 		sb.WriteString("(")
 		for i := 0; i < v.NumField(); i++ {
+			val := v.Field(i)
+
 			if i > 0 {
 				sb.WriteString(", ")
 			}
-			sb.WriteString(v.Type().Field(i).Name + " : ")
-			val := v.Field(i)
+			displayName := v.Type().Field(i).Name
+			tagName, ok := v.Type().Field(i).Tag.Lookup("report")
+			if ok {
+				tags := strings.Split(tagName, ",")
+				if len(tags) == 2 {
+					displayName = tags[0]
+					if displayName == "" {
+						displayName = v.Type().Field(i).Name
+					}
+					if tags[1] == "uppercase" {
+						upper := strings.ToUpper(v.Field(i).String())
+						val = reflect.ValueOf(upper)
+					}
+				}
+			}
+			sb.WriteString(displayName + " : ")
+
 			text(sb, &val)
 		}
 		sb.WriteString(")")
